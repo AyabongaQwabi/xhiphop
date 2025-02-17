@@ -160,7 +160,6 @@ export default function CustomVideoPlayer({ src, description }) {
           ref={videoRef}
           src={src}
           className='w-full h-48 lg:h-72  lg:rounded-2xl'
-          controls={false}
         ></video>
         <button
           onClick={togglePlay}
