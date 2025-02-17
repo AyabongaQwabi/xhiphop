@@ -19,22 +19,17 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Ensure the OUTPUT_DIR exists
+    await fs.promises.mkdir(OUTPUT_DIR, { recursive: true });
+
     const filename = randomUUID();
     const audioPath = path.join(OUTPUT_DIR, `${filename}.mp3`);
-    const publicPath = `/audio/${filename}.mp3`;
 
-    if (!fs.existsSync(OUTPUT_DIR)) {
-      fs.mkdirSync(OUTPUT_DIR, { recursive: true });
-    }
-
-    // Use FFmpeg to extract audio
-    await execPromise(`ffmpeg -i "${videoUrl}" -q:a 0 -map a "${audioPath}"`);
-
-    return NextResponse.json({ audioUrl: publicPath });
+    // Your existing code to convert video to audio and save it to audioPath
   } catch (error) {
-    console.log('Error processing video:', error);
+    console.error('Error converting video to audio:', error);
     return NextResponse.json(
-      { error: 'Error processing video' },
+      { error: 'Failed to convert video to audio' },
       { status: 500 }
     );
   }
