@@ -6,7 +6,6 @@ import { promisify } from 'util';
 import { randomUUID } from 'crypto';
 
 const execPromise = promisify(exec);
-const OUTPUT_DIR = path.join(process.cwd(), 'public', 'audio');
 
 export async function POST(req: NextRequest) {
   try {
@@ -19,15 +18,25 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Ensure the OUTPUT_DIR exists
-    await fs.promises.mkdir(OUTPUT_DIR, { recursive: true });
-
     const filename = randomUUID();
-    const audioPath = path.join(OUTPUT_DIR, `${filename}.mp3`);
+    const audioPath = path.join(process.cwd(), `${filename}.mp3`);
+    console.log('\n\nAudio path:', audioPath);
 
-    // Your existing code to convert video to audio and save it to audioPath
+    // Use FFmpeg to extract audio
+    await execPromise(`ffmpeg -i "${videoUrl}" -q:a 0 -map a "${audioPath}"`);
+
+    // Stream the file in the response for client download
+    const fileStream = fs.createReadStream(audioPath);
+    const response = new NextResponse(fileStream, {
+      headers: {
+        'Content-Type': 'audio/mpeg',
+        'Content-Disposition': `attachment; filename="${filename}.mp3"`,
+      },
+    });
+
+    return response;
   } catch (error) {
-    console.error('Error converting video to audio:', error);
+    console.log('\n\nError processing video:', error);
     return NextResponse.json(
       { error: 'Failed to convert video to audio' },
       { status: 500 }
