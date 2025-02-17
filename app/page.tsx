@@ -93,7 +93,7 @@ export default function Home() {
               height={150}
               className='mx-auto mb-8'
             />
-            <h1 className='text-5xl md:text-7xl font-bold mb-4 h-24 flex my-2 items-center justify-center'>
+            <h1 className='text-4xl p-4 md:text-5xl md:text-7xl font-bold mb-4 h-24 flex my-2 items-center justify-center'>
               <span
                 className={`transition-opacity duration-500 ${
                   isVisible ? 'opacity-100' : 'opacity-0'
