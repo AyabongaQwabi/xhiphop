@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ audioUrl: publicPath });
   } catch (error) {
-    //console.log('Error processing video:', error);
+    console.log('Error processing video:', error);
     return NextResponse.json(
       { error: 'Error processing video' },
       { status: 500 }
