@@ -49,10 +49,20 @@ export default function CustomVideoPlayer({ src, description }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ videoUrl: src }),
       });
-      const data = await response.json();
-      if (data.audioUrl) {
-        setMp3Url(data.audioUrl);
+
+      if (!response.ok) {
+        throw new Error('Failed to convert video to audio');
       }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = `${description}.mp3`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Error converting to MP3:', error);
     } finally {
@@ -104,7 +114,7 @@ export default function CustomVideoPlayer({ src, description }) {
           rel='noopener noreferrer'
           className='block w-full text-center mb-4 bg-red-600 text-white py-2 rounded-lg shadow-lg hover:bg-red-700'
         >
-          <Download className='inline-block mr-2' /> Download Video
+          <Download className='inline-block mr-2' /> Gutyula iVideo
         </a>
         {mp3Url ? (
           <a
@@ -114,7 +124,7 @@ export default function CustomVideoPlayer({ src, description }) {
             rel='noopener noreferrer'
             className='block w-full text-center mb-4 bg-red-600 text-white py-2 rounded-lg shadow-lg hover:bg-red-700'
           >
-            <Download className='inline-block mr-2' /> Download MP3
+            <Download className='inline-block mr-2' /> Gutyula iMP3
           </a>
         ) : (
           <button
@@ -123,7 +133,7 @@ export default function CustomVideoPlayer({ src, description }) {
             disabled={converting}
           >
             <Music className='inline-block mr-2' />{' '}
-            {converting ? 'Converting...' : 'Convert to MP3'}
+            {converting ? 'Isacaphula iMp3..' : 'Gutyula iMP3'}
           </button>
         )}
       </div>

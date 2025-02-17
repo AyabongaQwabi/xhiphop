@@ -5,11 +5,15 @@ import Link from 'next/link';
 import { useState, useEffect } from 'react';
 
 const taglines = [
-  'Xhosa Hip Hop Vids',
-  'Watch XHipHop Videos',
-  'Discover Dope MCees',
-  'Vibe wit the streets',
-  'Where Culture Meets Hip Hop',
+  'Xhosa Hip Hop Vids🔥',
+  'Bukela iiXHipHop Videos📺',
+  'Jampa iiCats ezi Dope😎',
+  'iVibe yase kasi🎵',
+  'iCiko Lomculo lilapha 🤞🏽',
+  'iiSpaza Gods zilapha 🙌🏽',
+  'uManyoko ulapha 😎',
+  'uGxeezy ulapha 🤯',
+  'Rap Rapper Rappest 🎤',
 ];
 
 export default function Home() {
@@ -23,7 +27,7 @@ export default function Home() {
         setCurrentTagline((prev) => (prev + 1) % taglines.length);
         setIsVisible(true);
       }, 500); // Wait for fade out before changing tagline
-    }, 4000); // Change tagline every 4 seconds
+    }, 2500); // Change tagline every 4 seconds
 
     return () => clearInterval(intervalId);
   }, []);
@@ -89,7 +93,7 @@ export default function Home() {
               height={150}
               className='mx-auto mb-8'
             />
-            <h1 className='text-5xl md:text-7xl font-bold mb-4 h-24 flex items-center justify-center'>
+            <h1 className='text-5xl md:text-7xl font-bold mb-4 h-24 flex my-2 items-center justify-center'>
               <span
                 className={`transition-opacity duration-500 ${
                   isVisible ? 'opacity-100' : 'opacity-0'
@@ -99,7 +103,7 @@ export default function Home() {
               </span>
             </h1>
             <p className='text-xl md:text-2xl mb-8 animate-subtitle'>
-              Watch and enjoy the best Xhosa hip hop music videos
+              Watch and enjoy the ntswempest Xhosa hip hop music videos
             </p>
             <Link
               href='/videos'
