@@ -135,7 +135,7 @@ export function VideoPlayer() {
       </div>
 
       {/* Collapsible Video Details Section */}
-      <div className='mt-4 p-4'>
+      <div className='mt-4 px-4 py-1'>
         <button
           onClick={toggleDetails}
           className='flex items-center text-gray-600 mb-4'

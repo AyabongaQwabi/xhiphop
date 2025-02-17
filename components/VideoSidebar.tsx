@@ -135,9 +135,9 @@ export function VideoSidebar() {
             key={video.id}
             ref={index === videos.length - 1 ? lastVideoElementRef : null}
             className={cn(
-              'hover:bg-red-200 bg-gray-50 md:shadow-md md:rounded-md border-b border-gray-900 p-4 lg:m-4 cursor-pointer transition-colors duration-200',
+              'hover:bg-black bg-gray-50 md:shadow-md md:rounded-md border-b border-gray-900 p-4 lg:m-4 cursor-pointer transition-colors duration-200',
               selectedVideo?.id === video.id &&
-                'bg-red-200 md:shadow-md rounded-md p-4 m-4'
+                'bg-gray-50 md:shadow-md rounded-md p-4 m-4'
             )}
             onClick={() => setSelectedVideo(video)}
           >
