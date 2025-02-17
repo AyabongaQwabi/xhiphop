@@ -1,9 +1,7 @@
 import { useRef, useState, useEffect } from 'react';
-import { Play, Pause, Download, Music } from 'lucide-react';
+import { Play, Pause, Download, Music, Loader } from 'lucide-react';
 import { fetchFile, toBlobURL } from '@ffmpeg/util';
 import { FFmpeg } from '@ffmpeg/ffmpeg';
-import { Save } from 'lucide-react';
-import { set } from 'date-fns';
 
 export default function CustomVideoPlayer({ src, description }) {
   const videoRef = useRef(null);
@@ -18,6 +16,7 @@ export default function CustomVideoPlayer({ src, description }) {
   const ffmpegRef = useRef(new FFmpeg());
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const messageRef = useRef<HTMLParagraphElement | null>(null);
+  const [progress, setProgress] = useState(0);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -79,6 +78,9 @@ export default function CustomVideoPlayer({ src, description }) {
     setConverting(true);
     const ffmpeg = ffmpegRef.current;
 
+    ffmpeg.on('progress', ({ progress, time }) => {
+      setProgress(progress * 100);
+    });
     // Download an example MP4 video file (replace this URL with your own video file URL)
     await ffmpeg.writeFile('input.mp4', await fetchFile(src));
 
@@ -112,7 +114,34 @@ export default function CustomVideoPlayer({ src, description }) {
     link.click();
 
     setConverting(false);
+    setProgress(0);
   };
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (video) {
+      video.addEventListener('loadedmetadata', () =>
+        setDuration(video.duration)
+      );
+      video.addEventListener('timeupdate', () =>
+        setCurrentTime(video.currentTime)
+      );
+      video.addEventListener('waiting', () => setIsLoading(true));
+      video.addEventListener('playing', () => setIsLoading(false));
+    }
+    return () => {
+      if (video) {
+        video.removeEventListener('loadedmetadata', () =>
+          setDuration(video.duration)
+        );
+        video.removeEventListener('timeupdate', () =>
+          setCurrentTime(video.currentTime)
+        );
+        video.removeEventListener('waiting', () => setIsLoading(true));
+        video.removeEventListener('playing', () => setIsLoading(false));
+      }
+    };
+  }, []);
 
   const handleSeek = (e) => {
     const newTime = parseFloat(e.target.value);
@@ -139,6 +168,11 @@ export default function CustomVideoPlayer({ src, description }) {
         >
           {playing ? <Pause size={32} /> : <Play size={32} />}
         </button>
+        {isLoading && (
+          <div className='absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2'>
+            <Loader className='animate-spin text-white' size={48} />
+          </div>
+        )}
       </div>
       <div className='flex items-center justify-between text-gray-800 mt-2 px-4 py-2'>
         <span>
@@ -181,7 +215,8 @@ export default function CustomVideoPlayer({ src, description }) {
             disabled={converting}
           >
             <Music className='inline-block mr-2' />{' '}
-            {converting ? 'Isacaphula iMp3..' : 'Gutyula iMP3'}
+            {converting ? 'Isacaphula iMp3..' : 'Gutyula iMP3'}{' '}
+            {progress > 0 && `${progress.toFixed(2)}%`}
           </button>
         )}
       </div>
