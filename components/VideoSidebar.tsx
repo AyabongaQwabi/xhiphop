@@ -5,7 +5,13 @@ import Image from 'next/image';
 import { useVideo } from '../contexts/VideoContext';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import { ThumbsUp, MessageCircle, AlertCircle } from 'lucide-react';
+import {
+  ThumbsUp,
+  MessageCircle,
+  AlertCircle,
+  ChevronRight,
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface Video {
   id: string;
@@ -23,6 +29,7 @@ export function VideoSidebar() {
   const [error, setError] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(true);
   const [after, setAfter] = useState('');
+  const [isOpen, setIsOpen] = useState(false);
 
   const { selectedVideo, setSelectedVideo } = useVideo();
 
@@ -80,7 +87,7 @@ export function VideoSidebar() {
 
   useEffect(() => {
     fetchVideos();
-  }, []);
+  }, []); // Removed fetchVideos from the dependency array
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -112,89 +119,106 @@ export function VideoSidebar() {
 
   if (error) {
     return (
-      <aside className='w-80 bg-gray-900 h-screen overflow-hidden border-r border-red-200 shadow-md rounded-md p-4 m-4'>
-        <div className='flex flex-col items-center justify-center h-full p-4'>
+      <aside className='w-full lg:w-80 bg-black text-white p-4'>
+        <div className='flex flex-col items-center justify-center h-full'>
           <AlertCircle className='w-12 h-12 text-red-500 mb-4' />
           <p className='text-red-500 text-center mb-4'>{error}</p>
-          <button
-            onClick={() => fetchVideos()}
-            className='px-4 py-2 bg-neon-red text-white rounded hover:bg-opacity-90 transition-colors'
-          >
+          <Button onClick={() => fetchVideos()} variant='destructive'>
             Try Again
-          </button>
+          </Button>
         </div>
       </aside>
     );
   }
 
   return (
-    <aside className='w-full lg:w-80 bg-gray-200 h-96 md:h-screen overflow-hidden border-r md:shadow-lg border-gray-200'>
-      <div className='h-full overflow-y-auto'>
-        {videos.map((video, index) => (
-          <div
-            key={video.id}
-            ref={index === videos.length - 1 ? lastVideoElementRef : null}
-            className={cn(
-              'hover:bg-black bg-gray-50 md:shadow-md md:rounded-md border-b border-gray-900 p-4 lg:m-4 cursor-pointer transition-colors duration-200',
-              selectedVideo?.id === video.id &&
-                'bg-gray-50 md:shadow-md rounded-md p-4 m-4'
-            )}
-            onClick={() => setSelectedVideo(video)}
-          >
-            <div className='aspect-video relative rounded-lg overflow-hidden bg-red-200 shadow-md rounded-md p-4 m-4'>
-              {video.thumbnail ? (
-                <Image
-                  src={video.thumbnail || '/placeholder.svg'}
-                  alt={video.title || 'Video thumbnail'}
-                  fill
-                  className='object-cover'
-                  sizes='(max-width: 320px) 100vw, 320px'
-                  priority={index < 4}
-                />
-              ) : (
-                <div className='absolute inset-0 flex items-center justify-center bg-gray-700'>
-                  <span className='text-gray-600 text-sm'>No thumbnail</span>
-                </div>
-              )}
-            </div>
-            <div className='mt-2 space-y-1'>
-              <h3 className='text-sm font-medium line-clamp-2 text-gray-700'>
-                {video.title || 'Untitled Video'}
-              </h3>
-              {video.description && (
-                <p className='text-xs text-gray-400 line-clamp-2'>
-                  {truncateText(video.description, 100)}
-                </p>
-              )}
-              <div className='flex items-center space-x-4 text-xs text-gray-500'>
-                <div className='flex items-center'>
-                  <ThumbsUp className='w-3 h-3 mr-1' />
-                  <span>{formatCount(video.likesCount)}</span>
-                </div>
-                <div className='flex items-center'>
-                  <MessageCircle className='w-3 h-3 mr-1' />
-                  <span>{formatCount(video.commentsCount)}</span>
-                </div>
-              </div>
-              <p className='text-xs text-gray-500'>
-                {formatDate(video.created_time)}
-              </p>
-            </div>
-          </div>
-        ))}
-        {loading && (
-          <div className='p-3 space-y-3'>
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className='space-y-2'>
-                <Skeleton className='w-full aspect-video rounded-lg bg-red-200 shadow-md rounded-md p-4 m-4' />
-                <Skeleton className='w-3/4 h-4 rounded bg-red-200 shadow-md rounded-md p-4 m-4' />
-                <Skeleton className='w-full h-8 rounded bg-red-200 shadow-md rounded-md p-4 m-4' />
-                <Skeleton className='w-1/2 h-3 rounded bg-red-200 shadow-md rounded-md p-4 m-4' />
-              </div>
-            ))}
-          </div>
+    <>
+      <Button
+        className='lg:hidden fixed bottom-4 right-4 z-50 bg-red-600 text-white'
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        {isOpen ? 'Close' : 'Videos'}
+        <ChevronRight
+          className={`ml-2 h-4 w-4 transition-transform ${
+            isOpen ? 'rotate-180' : ''
+          }`}
+        />
+      </Button>
+      <aside
+        className={cn(
+          'w-full lg:w-80 bg-black text-white overflow-hidden transition-all duration-300 ease-in-out',
+          isOpen ? 'fixed inset-0 z-40' : 'hidden lg:block'
         )}
-      </div>
-    </aside>
+      >
+        <div className='h-full overflow-y-auto'>
+          {videos.map((video, index) => (
+            <div
+              key={video.id}
+              ref={index === videos.length - 1 ? lastVideoElementRef : null}
+              className={cn(
+                'hover:bg-gray-900 p-4 cursor-pointer transition-colors duration-200 border-b border-gray-800',
+                selectedVideo?.id === video.id && 'bg-gray-900'
+              )}
+              onClick={() => {
+                setSelectedVideo(video);
+                setIsOpen(false);
+              }}
+            >
+              <div className='aspect-video relative rounded-lg overflow-hidden mb-2'>
+                {video.thumbnail ? (
+                  <Image
+                    src={video.thumbnail || '/placeholder.svg'}
+                    alt={video.title || 'Video thumbnail'}
+                    fill
+                    className='object-cover'
+                    sizes='(max-width: 320px) 100vw, 320px'
+                    priority={index < 4}
+                  />
+                ) : (
+                  <div className='absolute inset-0 flex items-center justify-center bg-gray-800'>
+                    <span className='text-gray-400 text-sm'>No thumbnail</span>
+                  </div>
+                )}
+              </div>
+              <div className='space-y-1'>
+                <h3 className='text-sm font-medium line-clamp-2 text-white'>
+                  {video.title || 'Untitled Video'}
+                </h3>
+                {video.description && (
+                  <p className='text-xs text-gray-400 line-clamp-2'>
+                    {truncateText(video.description, 100)}
+                  </p>
+                )}
+                <div className='flex items-center space-x-4 text-xs text-gray-400'>
+                  <div className='flex items-center'>
+                    <ThumbsUp className='w-3 h-3 mr-1' />
+                    <span>{formatCount(video.likesCount)}</span>
+                  </div>
+                  <div className='flex items-center'>
+                    <MessageCircle className='w-3 h-3 mr-1' />
+                    <span>{formatCount(video.commentsCount)}</span>
+                  </div>
+                </div>
+                <p className='text-xs text-gray-500'>
+                  {formatDate(video.created_time)}
+                </p>
+              </div>
+            </div>
+          ))}
+          {loading && (
+            <div className='p-4 space-y-4'>
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className='space-y-2'>
+                  <Skeleton className='w-full aspect-video rounded-lg bg-gray-800' />
+                  <Skeleton className='w-3/4 h-4 rounded bg-gray-800' />
+                  <Skeleton className='w-full h-8 rounded bg-gray-800' />
+                  <Skeleton className='w-1/2 h-3 rounded bg-gray-800' />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </aside>
+    </>
   );
 }

@@ -1,121 +1,45 @@
+'use client';
+
 import { useRef, useState, useEffect } from 'react';
-import { Play, Pause, Download, Music, Loader } from 'lucide-react';
+import {
+  Play,
+  Pause,
+  Download,
+  Music,
+  Loader,
+  Maximize,
+  Volume2,
+  VolumeX,
+} from 'lucide-react';
 import { fetchFile, toBlobURL } from '@ffmpeg/util';
 import { FFmpeg } from '@ffmpeg/ffmpeg';
+import { Button } from '@/components/ui/button';
+import { Slider } from '@/components/ui/slider';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 export default function CustomVideoPlayer({ src, description }) {
-  const videoRef = useRef(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [playing, setPlaying] = useState(false);
-  const [mp3Url, setMp3Url] = useState(null);
+  const [mp3Url, setMp3Url] = useState<string | null>(null);
   const [converting, setConverting] = useState(false);
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
-
-  const [loaded, setLoaded] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [volume, setVolume] = useState(1);
+  const [isMuted, setIsMuted] = useState(false);
   const ffmpegRef = useRef(new FFmpeg());
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const messageRef = useRef<HTMLParagraphElement | null>(null);
   const [progress, setProgress] = useState(0);
-
-  useEffect(() => {
-    const video = videoRef.current;
-    if (video) {
-      video.addEventListener('loadedmetadata', () =>
-        setDuration(video.duration)
-      );
-      video.addEventListener('timeupdate', () =>
-        setCurrentTime(video.currentTime)
-      );
-    }
-    return () => {
-      if (video) {
-        video.removeEventListener('loadedmetadata', () =>
-          setDuration(video.duration)
-        );
-        video.removeEventListener('timeupdate', () =>
-          setCurrentTime(video.currentTime)
-        );
-      }
-    };
-  }, []);
-
-  const togglePlay = () => {
-    if (videoRef.current.paused) {
-      videoRef.current.play();
-      setPlaying(true);
-    } else {
-      videoRef.current.pause();
-      setPlaying(false);
-    }
-  };
-
-  const load = async () => {
-    setIsLoading(true);
-    const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.10/dist/umd';
-    const ffmpeg = ffmpegRef.current;
-
-    // Log messages from FFmpeg
-    ffmpeg.on('log', ({ message }) => {
-      if (messageRef.current) messageRef.current.innerHTML = message;
-    });
-
-    // Load FFmpeg WebAssembly files from the unpkg CDN
-    await ffmpeg.load({
-      coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
-      wasmURL: await toBlobURL(
-        `${baseURL}/ffmpeg-core.wasm`,
-        'application/wasm'
-      ),
-    });
-
-    setLoaded(true);
-    setIsLoading(false);
-    console.log('FFmpeg is ready to use');
-  };
-
-  const convertToMP3 = async () => {
-    setConverting(true);
-    const ffmpeg = ffmpegRef.current;
-
-    ffmpeg.on('progress', ({ progress, time }) => {
-      setProgress(progress * 100);
-    });
-    // Download an example MP4 video file (replace this URL with your own video file URL)
-    await ffmpeg.writeFile('input.mp4', await fetchFile(src));
-
-    console.log('Extract audio from the MP4 and convert to MP3');
-    await ffmpeg.exec([
-      '-i',
-      'input.mp4',
-      '-vn',
-      '-ar',
-      '44100',
-      '-ac',
-      '2',
-      '-ab',
-      '192k',
-      'output.mp3',
-    ]);
-    console.log('Audio extracted and converted to MP3');
-    // Read the MP3 output file
-    const data = (await ffmpeg.readFile('output.mp3')) as any;
-    console.log('MP3 data:', data);
-    // download the blob data
-    const audioBlob = new Blob([data.buffer], { type: 'audio/mp3' });
-
-    // Create a URL for the audio blob to allow downloading
-    const audioUrl = URL.createObjectURL(audioBlob);
-    setMp3Url(audioUrl);
-
-    const link = document.createElement('a');
-    link.href = audioUrl;
-    link.download = `${description}.mp3`;
-    link.click();
-
-    setConverting(false);
-    setProgress(0);
-  };
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [conversionStep, setConversionStep] = useState<
+    'idle' | 'downloading' | 'converting'
+  >('idle');
 
   useEffect(() => {
     const video = videoRef.current;
@@ -127,8 +51,11 @@ export default function CustomVideoPlayer({ src, description }) {
         setCurrentTime(video.currentTime)
       );
       video.addEventListener('waiting', () => setIsLoading(true));
-      video.addEventListener('playing', () => setIsLoading(false));
+      video.addEventListener('canplay', () => setIsLoading(false));
+      video.addEventListener('play', () => setPlaying(true));
+      video.addEventListener('pause', () => setPlaying(false));
     }
+
     return () => {
       if (video) {
         video.removeEventListener('loadedmetadata', () =>
@@ -138,86 +65,242 @@ export default function CustomVideoPlayer({ src, description }) {
           setCurrentTime(video.currentTime)
         );
         video.removeEventListener('waiting', () => setIsLoading(true));
-        video.removeEventListener('playing', () => setIsLoading(false));
+        video.removeEventListener('canplay', () => setIsLoading(false));
+        video.removeEventListener('play', () => setPlaying(true));
+        video.removeEventListener('pause', () => setPlaying(false));
       }
     };
   }, []);
 
-  const handleSeek = (e) => {
-    const newTime = parseFloat(e.target.value);
-    videoRef.current.currentTime = newTime;
-    setCurrentTime(newTime);
-  };
-
   useEffect(() => {
-    load();
+    loadFFmpeg();
   }, []);
 
+  const loadFFmpeg = async () => {
+    const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.10/dist/umd';
+    const ffmpeg = ffmpegRef.current;
+
+    await ffmpeg.load({
+      coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
+      wasmURL: await toBlobURL(
+        `${baseURL}/ffmpeg-core.wasm`,
+        'application/wasm'
+      ),
+    });
+  };
+
+  const togglePlay = () => {
+    if (videoRef.current) {
+      if (videoRef.current.paused) {
+        videoRef.current.play();
+      } else {
+        videoRef.current.pause();
+      }
+    }
+  };
+
+  const handleSeek = (value: number[]) => {
+    if (videoRef.current) {
+      videoRef.current.currentTime = value[0];
+      setCurrentTime(value[0]);
+    }
+  };
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      containerRef.current?.requestFullscreen();
+      setIsFullscreen(true);
+    } else {
+      document.exitFullscreen();
+      setIsFullscreen(false);
+    }
+  };
+
+  const handleVolumeChange = (value: number[]) => {
+    if (videoRef.current) {
+      videoRef.current.volume = value[0];
+      setVolume(value[0]);
+      setIsMuted(value[0] === 0);
+    }
+  };
+
+  const toggleMute = () => {
+    if (videoRef.current) {
+      videoRef.current.muted = !videoRef.current.muted;
+      setIsMuted(videoRef.current.muted);
+      setVolume(videoRef.current.muted ? 0 : 1);
+    }
+  };
+
+  const convertToMP3 = async () => {
+    setConversionStep('downloading');
+    setIsDownloading(true);
+    const ffmpeg = ffmpegRef.current;
+
+    ffmpeg.on('progress', ({ progress }) => {
+      setProgress(progress * 100);
+    });
+
+    try {
+      const videoData = await fetchFile(src);
+      setIsDownloading(false);
+      setConversionStep('converting');
+
+      await ffmpeg.writeFile('input.mp4', videoData);
+
+      await ffmpeg.exec([
+        '-i',
+        'input.mp4',
+        '-vn',
+        '-ar',
+        '44100',
+        '-ac',
+        '2',
+        '-ab',
+        '192k',
+        'output.mp3',
+      ]);
+
+      const data = (await ffmpeg.readFile('output.mp3')) as any;
+      const audioBlob = new Blob([data.buffer], { type: 'audio/mp3' });
+      const audioUrl = URL.createObjectURL(audioBlob);
+      setMp3Url(audioUrl);
+
+      setConversionStep('idle');
+    } catch (error) {
+      console.error('Error during conversion:', error);
+      setConversionStep('idle');
+    }
+
+    setProgress(0);
+  };
+
+  const getConversionButtonText = () => {
+    switch (conversionStep) {
+      case 'downloading':
+        return 'Downloading...';
+      case 'converting':
+        return `Converting... ${progress.toFixed(0)}%`;
+      default:
+        return mp3Url ? 'Download MP3' : 'Convert to MP3';
+    }
+  };
+
+  const formatTime = (time: number) => {
+    const minutes = Math.floor(time / 60);
+    const seconds = Math.floor(time % 60);
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  };
+
   return (
-    <div className='relative w-full md:h-full h-full  lg:mx-auto lg:p-4 pb-4'>
-      <div className='relative w-full bg-black lg:rounded-2xl lg:overflow-hidden lg:border-8 lg:border-red-600 lg:shadow-lg shadow-red-400'>
+    <div
+      ref={containerRef}
+      className='relative w-full max-w-3xl mx-auto bg-gray-900 md:rounded-lg overflow-hidden'
+    >
+      <div className='relative aspect-video'>
         <video
           ref={videoRef}
           src={src}
-          className='w-full h-48 lg:h-72  lg:rounded-2xl'
-          controls={false}
-        ></video>
-        <button
+          className='w-full h-full object-cover'
           onClick={togglePlay}
-          className='absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-red-600 text-white p-4 rounded-full shadow-lg hover:bg-red-700'
-        >
-          {playing ? <Pause size={32} /> : <Play size={32} />}
-        </button>
+        />
         {isLoading && (
-          <div className='absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2'>
+          <div className='absolute inset-0 flex items-center justify-center bg-black bg-opacity-50'>
             <Loader className='animate-spin text-white' size={48} />
           </div>
         )}
+        <div className='absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-4'>
+          <div className='flex items-center justify-between text-white mb-2'>
+            <span>{formatTime(currentTime)}</span>
+            <Slider
+              value={[currentTime]}
+              max={duration}
+              step={0.1}
+              onValueChange={handleSeek}
+              className='w-full mx-4'
+            />
+            <span>{formatTime(duration)}</span>
+          </div>
+          <div className='flex items-center justify-between'>
+            <div className='flex items-center space-x-2'>
+              <Button
+                size='icon'
+                variant='ghost'
+                onClick={togglePlay}
+                className='text-white hover:bg-white/20'
+              >
+                {playing ? (
+                  <Pause className='h-6 w-6' />
+                ) : (
+                  <Play className='h-6 w-6' />
+                )}
+              </Button>
+              <Button
+                size='icon'
+                variant='ghost'
+                onClick={toggleMute}
+                className='text-white hover:bg-white/20'
+              >
+                {isMuted ? (
+                  <VolumeX className='h-6 w-6' />
+                ) : (
+                  <Volume2 className='h-6 w-6' />
+                )}
+              </Button>
+              <Slider
+                value={[volume]}
+                max={1}
+                step={0.1}
+                onValueChange={handleVolumeChange}
+                className='w-24'
+              />
+            </div>
+            <Button
+              size='icon'
+              variant='ghost'
+              onClick={toggleFullscreen}
+              className='text-white hover:bg-white/20'
+            >
+              <Maximize className='h-6 w-6' />
+            </Button>
+          </div>
+        </div>
       </div>
-      <div className='flex items-center justify-between text-gray-800 mt-2 px-4 py-2'>
-        <span>
-          {new Date(currentTime * 1000).toISOString().substring(14, 19)}
-        </span>
-        <input
-          type='range'
-          min='0'
-          max={duration}
-          value={currentTime}
-          onChange={handleSeek}
-          className='w-full mx-2 text-red-600 bg-red-900'
-        />
-        <span>{new Date(duration * 1000).toISOString().substring(14, 19)}</span>
-      </div>
-      <div className='flex items-center justify-center mt-4 lg: gap-4 lg:h-full px-4 py-2'>
-        <a
-          href={src}
-          download={`${description}.mp4`}
-          target='_blank'
-          rel='noopener noreferrer'
-          className='block w-full text-center mb-4 bg-red-600 text-white py-2 rounded-lg shadow-lg hover:bg-red-700'
-        >
-          <Download className='inline-block mr-2' /> Gutyula iVideo
-        </a>
-        {mp3Url ? (
-          <a
-            href={mp3Url}
-            download={`${description}.mp3`}
-            target='_blank'
-            rel='noopener noreferrer'
-            className='block w-full text-center mb-4 bg-red-600 text-white py-2 rounded-lg shadow-lg hover:bg-red-700'
+      <div className='flex flex-col items-center justify-center mt-4 space-y-4 p-4'>
+        <div className='flex items-center justify-center space-x-4'>
+          <Button
+            onClick={() => window.open(src, '_blank')}
+            className='bg-white text-gray-900 hover:bg-gray-200'
           >
-            <Download className='inline-block mr-2' /> Gutyula iMP3
-          </a>
-        ) : (
-          <button
-            onClick={convertToMP3}
-            className=' w-full text-center bg-red-600 mb-4 text-white py-2 rounded-lg shadow-lg hover:bg-red-700 flex justify-center items-center'
-            disabled={converting}
-          >
-            <Music className='inline-block mr-2' />{' '}
-            {converting ? 'Isacaphula iMp3..' : 'Gutyula iMP3'}{' '}
-            {progress > 0 && `${progress.toFixed(2)}%`}
-          </button>
+            <Download className='h-4 w-4 mr-2' />
+            <span>Download Video</span>
+          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  onClick={
+                    mp3Url ? () => window.open(mp3Url, '_blank') : convertToMP3
+                  }
+                  disabled={conversionStep !== 'idle'}
+                  className='bg-white text-gray-900 hover:bg-gray-200'
+                >
+                  <Music className='h-4 w-4 mr-2' />
+                  <span>{getConversionButtonText()}</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Converting to MP3 requires downloading the video first.</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+        {conversionStep !== 'idle' && (
+          <p className='text-sm text-white'>
+            {conversionStep === 'downloading'
+              ? 'Downloading video before conversion...'
+              : 'Converting video to MP3...'}
+          </p>
         )}
       </div>
     </div>

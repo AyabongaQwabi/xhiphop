@@ -13,13 +13,7 @@ export default function Home() {
           </div>
 
           {/* Video Player: Fixed on mobile */}
-          <div className='flex-grow p-6 relative'>
-            <div className='md:static fixed top-16 left-0 w-full z-50 bg-white shadow-lg'>
-              <VideoPlayer />
-            </div>
-
-            {/* Sidebar: Visible only on mobile, hidden on larger screens */}
-          </div>
+          <VideoPlayer />
           <p className='text-center text-gray-400 p-4 md:hidden'>
             &copy; {new Date().getFullYear()} Xhosa Hip Hop Vids
           </p>
