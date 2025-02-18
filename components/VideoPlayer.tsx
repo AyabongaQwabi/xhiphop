@@ -13,6 +13,7 @@ import CustomVideoPlayer from './CustomVideoPlayer';
 import { VideoSidebar } from './VideoSidebar';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Comments } from './Comments';
 
 interface Video {
   id: string;
@@ -28,6 +29,7 @@ export function VideoPlayer() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isDetailsVisible, setIsDetailsVisible] = useState(true);
+  const [comments, setComments] = useState([]);
 
   useEffect(() => {
     const fetchFirstVideo = async (retryCount = 0) => {
@@ -75,6 +77,27 @@ export function VideoPlayer() {
     }
   }, [selectedVideo]);
 
+  useEffect(() => {
+    const fetchComments = async () => {
+      if (selectedVideo) {
+        try {
+          const response = await fetch(
+            `/api/facebook/comments?videoId=${selectedVideo.id}`
+          );
+          if (!response.ok) {
+            throw new Error('Failed to fetch comments');
+          }
+          const data = await response.json();
+          setComments(data.data || []);
+        } catch (error) {
+          console.error('Error fetching comments:', error);
+        }
+      }
+    };
+
+    fetchComments();
+  }, [selectedVideo]);
+
   const formatCount = (count: number) => {
     if (count >= 1000000) return (count / 1000000).toFixed(1) + 'M';
     if (count >= 1000) return (count / 1000).toFixed(1) + 'K';
@@ -82,7 +105,8 @@ export function VideoPlayer() {
   };
 
   const toggleDetails = () => setIsDetailsVisible(!isDetailsVisible);
-
+  console.log('Comments', comments);
+  console.log('Selected Video', selectedVideo);
   if (loading) {
     return (
       <div className='space-y-4 p-4'>
@@ -158,6 +182,7 @@ export function VideoPlayer() {
             <p className='text-gray-700 leading-relaxed'>
               {selectedVideo.description || 'No description available'}
             </p>
+            <Comments comments={comments} />
           </div>
         )}
       </div>
