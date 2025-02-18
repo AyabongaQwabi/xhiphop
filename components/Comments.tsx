@@ -60,6 +60,7 @@ const firstNames = [
   'Advisor',
   'General',
   'Chief',
+  'Hunk',
 ];
 
 const lastNames = [
@@ -83,11 +84,32 @@ const lastNames = [
   'eFamous😁',
   'enama Tshamba🙄',
   'ene Blunt☘️',
-  'Spiti Flames🔥',
+  'eSpiti Flames🔥',
   'engu Thixo🙆🏽‍♂️',
   'eStrongo💪🏽',
   'eneNyongo👀',
   'eSuzayo',
+  "I'm hot🔥",
+  'Eat Me Now 😇',
+  'Yase Kapa🌊',
+  'Yaqanda🥚',
+  'Yesi Gama🙌🏽',
+  'Yama Petyu😁',
+  'Yoo Noonkala😌',
+  'yase Lwandle🌊',
+  'eBhityileyo😆',
+  'eSexy🤯',
+  'eLost 😵‍💫',
+  'eyiKhothayo😛',
+  'eBroke🫥',
+  'eNomsindo🤬',
+  'eXokayo🤥',
+  'eNyanyekayo🤮',
+  'eChilled🤤',
+  'eBored🥱',
+  'eCute🤗',
+  'eKleva😤',
+  'eDom🤪',
 ];
 
 function pickArandomName(): string {
