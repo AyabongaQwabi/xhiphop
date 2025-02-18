@@ -80,6 +80,9 @@ const firstNames = [
   'Phara',
   'Salesman',
   'MC',
+  'Vampire',
+  'Billionaire',
+  'Big Dawg',
 ];
 
 const lastNames = [
