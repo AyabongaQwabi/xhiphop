@@ -138,7 +138,7 @@ export function VideoPlayer() {
   }
 
   return (
-    <div className='max-w-4xl mx-auto bg-white md:shadow-lg rounded-lg overflow-hidden'>
+    <div className='w-full mx-auto bg-white md:shadow-lg h-screen overflow-scroll rounded-lg overflow-hidden'>
       <div className='aspect-video w-full'>
         <CustomVideoPlayer
           src={selectedVideo.source}

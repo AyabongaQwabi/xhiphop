@@ -195,7 +195,7 @@ export default function CustomVideoPlayer({ src, description }) {
   return (
     <div
       ref={containerRef}
-      className='relative w-full max-w-3xl mx-auto bg-gray-900 md:rounded-lg overflow-hidden'
+      className='relative w-full mx-auto bg-gray-900 md:rounded-lg overflow-hidden'
     >
       <div className='relative aspect-video'>
         <video

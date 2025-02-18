@@ -146,7 +146,7 @@ export function VideoSidebar() {
       </Button>
       <aside
         className={cn(
-          'w-full lg:w-80 bg-black text-white overflow-hidden transition-all duration-300 ease-in-out',
+          'w-full lg:w-80 bg-black text-white overflow-scroll h-screen transition-all duration-300 ease-in-out',
           isOpen ? 'fixed inset-0 z-40' : 'hidden lg:block'
         )}
       >
