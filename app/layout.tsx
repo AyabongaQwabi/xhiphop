@@ -8,9 +8,9 @@ import { Analytics } from '@vercel/analytics/react';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata = {
-  title: 'Xhosa Hip Hop Videos',
+  title: 'Xhosa Hip Hop Video Streams & Downloads',
   description:
-    'Watch the latest and greatest Xhosa hip hop music videos. Discover new artists and enjoy your favorite tracks.',
+    'Watch &  Download the latest and greatest Xhosa hip hop music videos. Discover new artists and enjoy your favorite tracks.',
   manifest: '/manifest.json',
   themeColor: '#000000',
   viewport: 'width=device-width, initial-scale=1, maximum-scale=1',
@@ -21,14 +21,16 @@ export const metadata = {
   openGraph: {
     type: 'website',
     url: 'https://xhap.co.za',
-    title: 'Xhosa Hip Hop Videos',
-    description: 'Watch the latest and greatest Xhosa hip hop music videos.',
+    title: 'Xhosa Hip Hop Video Streams & Downloads',
+    description:
+      'Watch &  Download the latest and greatest Xhosa hip hop music videos.',
     images: [{ url: '/og-image.png' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Xhosa Hip Hop Videos',
-    description: 'Watch the latest and greatest Xhosa hip hop music videos.',
+    title: 'Xhosa Hip Hop Video Streams & Downloads',
+    description:
+      'Watch &  Download the latest and greatest Xhosa hip hop music videos.',
     images: ['/og-image.png'],
   },
 };
