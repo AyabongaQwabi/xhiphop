@@ -67,8 +67,6 @@ const firstNames = [
   'Crush',
   'Mfene',
   'Ndoni',
-  'Bhefta',
-  'Pifta',
   'Soldier',
   'Jahman',
   'Weakling',
@@ -87,7 +85,6 @@ const firstNames = [
 
 const lastNames = [
   'Yam',
-  'Ka Mama',
   'Yo Moya',
   'Ye Airtime',
   'Ka Makhelwane',
