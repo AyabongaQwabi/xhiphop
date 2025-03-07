@@ -215,7 +215,7 @@ export function Comments({ comments }: CommentsProps) {
         Comments ({comments.length})
       </h3>
       <p className='text-gray-500 text-xs'>
-        Due to privacy policies we use anoyomous names and images
+        Due to privacy policies we use anonymous names and images
       </p>
       <ul className='space-y-4'>
         {comments.map((comment) => (
