@@ -14,6 +14,7 @@ import {
   SkipForward,
   Scissors,
   Share2,
+  Heart,
 } from 'lucide-react';
 import { fetchFile, toBlobURL } from '@ffmpeg/util';
 import { FFmpeg } from '@ffmpeg/ffmpeg';
@@ -34,11 +35,13 @@ import {
   TwitterIcon,
   LinkedinIcon,
 } from 'next-share';
+import { useVideo } from '../contexts/VideoContext';
 
 interface CustomVideoPlayerProps {
   src: string;
   description: string;
   title: string;
+  thumbnail: string;
   id: string;
 }
 
@@ -76,6 +79,8 @@ export default function CustomVideoPlayer({
   const [showControls, setShowControls] = useState(true);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [isShareMenuOpen, setIsShareMenuOpen] = useState(false);
+  const { isFavorite, toggleFavorite } = useVideo();
+  const [isFavorited, setIsFavorited] = useState(false);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -137,7 +142,8 @@ export default function CustomVideoPlayer({
 
   useEffect(() => {
     loadFFmpeg();
-  }, []);
+    setIsFavorited(isFavorite(id));
+  }, [id, isFavorite]);
 
   const loadFFmpeg = async () => {
     const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.10/dist/umd';
@@ -373,8 +379,9 @@ export default function CustomVideoPlayer({
     setIsShareMenuOpen(!isShareMenuOpen);
   };
 
-  const getShareUrl = () => {
-    return `${window.location.origin}/video/${id}`;
+  const handleFavoriteToggle = () => {
+    toggleFavorite(id);
+    setIsFavorited(!isFavorited);
   };
 
   return (
@@ -555,6 +562,34 @@ export default function CustomVideoPlayer({
                 </TooltipProvider>
               )}
 
+              {/* Favorite Button */}
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size='icon'
+                      variant='ghost'
+                      onClick={handleFavoriteToggle}
+                      className={`text-white hover:bg-white/20 ${
+                        isFavorited ? 'text-red-500' : ''
+                      }`}
+                    >
+                      <Heart
+                        className='h-5 w-5'
+                        fill={isFavorited ? 'currentColor' : 'none'}
+                      />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>
+                      {isFavorited
+                        ? 'Remove from favorites'
+                        : 'Add to favorites'}
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+
               {/* Share Button */}
               <TooltipProvider>
                 <Tooltip>
@@ -590,13 +625,21 @@ export default function CustomVideoPlayer({
       {isShareMenuOpen && (
         <div className='absolute top-4 right-4 bg-white rounded-lg shadow-lg p-4 z-50'>
           <div className='flex space-x-4'>
-            <FacebookShareButton url={getShareUrl()} quote={title}>
+            <FacebookShareButton
+              url={`https://www.facebook.com/XhosaHipHopHub/posts/${id}`}
+              quote={title}
+            >
               <FacebookIcon size={32} round />
             </FacebookShareButton>
-            <TwitterShareButton url={getShareUrl()} title={title}>
+            <TwitterShareButton
+              url={`https://www.facebook.com/XhosaHipHopHub/posts/${id}`}
+              title={title}
+            >
               <TwitterIcon size={32} round />
             </TwitterShareButton>
-            <LinkedinShareButton url={getShareUrl()}>
+            <LinkedinShareButton
+              url={`https://www.facebook.com/XhosaHipHopHub/posts/${id}`}
+            >
               <LinkedinIcon size={32} round />
             </LinkedinShareButton>
           </div>

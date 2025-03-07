@@ -4,7 +4,7 @@ import { Inter } from 'next/font/google';
 import { Navbar } from '../components/Navbar';
 import Script from 'next/script';
 import { Analytics } from '@vercel/analytics/react';
-
+import { VideoProvider } from '../contexts/VideoContext';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata = {
@@ -81,7 +81,9 @@ export default function RootLayout({
           src='https://connect.facebook.net/en_US/sdk.js'
         />
         <Navbar />
-        <main className='mt-16'>{children}</main>
+        <VideoProvider>
+          <main className='mt-16'>{children}</main>
+        </VideoProvider>
         <Analytics />
       </body>
     </html>

@@ -143,6 +143,9 @@ export function VideoPlayer() {
         <CustomVideoPlayer
           src={selectedVideo.source}
           description={selectedVideo.description}
+          title={selectedVideo.title}
+          thumbnail={selectedVideo.thumbnail}
+          id={selectedVideo.id}
         />
       </div>
 

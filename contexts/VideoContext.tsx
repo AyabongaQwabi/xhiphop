@@ -1,37 +1,71 @@
-"use client"
+'use client';
 
-import type React from "react"
-import { createContext, useState, useContext } from "react"
+import type React from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 
 interface Video {
-  id: string
-  title: string
-  description: string
-  thumbnail: {
-    data: {
-      url: string
-    }
-  }
+  id: string;
+  title: string;
+  description: string;
+  source: string;
+  thumbnail: string;
+  facebookPostId?: string;
 }
 
 interface VideoContextType {
-  selectedVideo: Video | null
-  setSelectedVideo: (video: Video) => void
+  selectedVideo: Video | null;
+  setSelectedVideo: React.Dispatch<React.SetStateAction<Video | null>>;
+  favoriteVideos: string[];
+  toggleFavorite: (videoId: string) => void;
+  isFavorite: (videoId: string) => boolean;
 }
 
-const VideoContext = createContext<VideoContextType | undefined>(undefined)
+const VideoContext = createContext<VideoContextType | undefined>(undefined);
 
-export function VideoProvider({ children }: { children: React.ReactNode }) {
-  const [selectedVideo, setSelectedVideo] = useState<Video | null>(null)
+export const VideoProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
+  const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
+  const [favoriteVideos, setFavoriteVideos] = useState<string[]>([]);
 
-  return <VideoContext.Provider value={{ selectedVideo, setSelectedVideo }}>{children}</VideoContext.Provider>
-}
+  useEffect(() => {
+    const storedFavorites = localStorage.getItem('favoriteVideos');
+    if (storedFavorites) {
+      setFavoriteVideos(JSON.parse(storedFavorites));
+    }
+  }, []);
 
-export function useVideo() {
-  const context = useContext(VideoContext)
+  const toggleFavorite = (videoId: string) => {
+    setFavoriteVideos((prev) => {
+      const newFavorites = prev.includes(videoId)
+        ? prev.filter((id) => id !== videoId)
+        : [...prev, videoId];
+      localStorage.setItem('favoriteVideos', JSON.stringify(newFavorites));
+      return newFavorites;
+    });
+  };
+
+  const isFavorite = (videoId: string) => favoriteVideos.includes(videoId);
+
+  return (
+    <VideoContext.Provider
+      value={{
+        selectedVideo,
+        setSelectedVideo,
+        favoriteVideos,
+        toggleFavorite,
+        isFavorite,
+      }}
+    >
+      {children}
+    </VideoContext.Provider>
+  );
+};
+
+export const useVideo = () => {
+  const context = useContext(VideoContext);
   if (context === undefined) {
-    throw new Error("useVideo must be used within a VideoProvider")
+    throw new Error('useVideo must be used within a VideoProvider');
   }
-  return context
-}
-
+  return context;
+};
