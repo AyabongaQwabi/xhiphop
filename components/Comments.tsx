@@ -1,6 +1,9 @@
+'use client';
+
 import { formatDistanceToNow } from 'date-fns';
-import { MessageCircle, ThumbsUp, Reply } from 'lucide-react';
+import { MessageCircle, Reply, Heart } from 'lucide-react';
 import Image from 'next/image';
+import { useState, useEffect } from 'react';
 
 interface CommentUser {
   id: string;
@@ -12,28 +15,28 @@ interface CommentUser {
   };
 }
 
-interface Reply {
-  id: string;
-  message: string;
-  created_time: string;
-  from: CommentUser;
-  likes: number;
-}
-
 interface Comment {
   id: string;
   message: string;
   created_time: string;
   from: CommentUser;
-  likes: number;
-  replies: Reply[];
-  replyCount: number;
+  like_count: number;
+  comment_count: number;
+  replies?: {
+    id: string;
+    message: string;
+    created_time: string;
+    from: CommentUser;
+    like_count: number;
+  }[];
 }
 
 interface CommentsProps {
   comments: Comment[];
+  videoId: string;
 }
 
+// Arrays for generating random names
 const firstNames = [
   'Poni',
   'Ngcali',
@@ -97,7 +100,6 @@ const lastNames = [
   'Yamanzi',
   'ene Nkqayi',
   'eBethayo👊',
-
   'eLilayo😭',
   'eWack😝',
   'eDope😎',
@@ -146,7 +148,8 @@ const lastNames = [
   'eDom🤪',
 ];
 
-function pickArandomName(): string {
+// Function to generate a random name
+function pickRandomName(): string {
   const randomFirstName =
     firstNames[Math.floor(Math.random() * firstNames.length)];
   const randomLastName =
@@ -154,48 +157,139 @@ function pickArandomName(): string {
   return `${randomFirstName} ${randomLastName}`;
 }
 
+// Function to generate a unique avatar URL based on the comment ID
+function generateAvatarUrl(commentId: string): string {
+  // Use different avatar APIs for variety
+  const avatarApis = [
+    // Dicebear API with different styles
+    `https://api.dicebear.com/7.x/fun-emoji/svg?seed=${commentId}`,
+    `https://api.dicebear.com/7.x/bottts/svg?seed=${commentId}`,
+    `https://api.dicebear.com/7.x/avataaars/svg?seed=${commentId}`,
+    `https://api.dicebear.com/7.x/lorelei/svg?seed=${commentId}`,
+    `https://api.dicebear.com/7.x/thumbs/svg?seed=${commentId}`,
+    `https://api.dicebear.com/7.x/notionists/svg?seed=${commentId}`,
+    `https://api.dicebear.com/7.x/open-peeps/svg?seed=${commentId}`,
+    `https://api.dicebear.com/7.x/personas/svg?seed=${commentId}`,
+  ];
+
+  // Use the comment ID to consistently select the same avatar style for the same comment
+  const avatarIndex =
+    Math.abs(
+      commentId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
+    ) % avatarApis.length;
+  return avatarApis[avatarIndex];
+}
+
+// Generate a random background color for avatar
+function generateAvatarBgColor(commentId: string): string {
+  const colors = [
+    'bg-blue-500',
+    'bg-green-500',
+    'bg-yellow-500',
+    'bg-red-500',
+    'bg-purple-500',
+    'bg-pink-500',
+    'bg-indigo-500',
+    'bg-teal-500',
+    'bg-orange-500',
+    'bg-cyan-500',
+    'bg-lime-500',
+    'bg-emerald-500',
+    'bg-violet-500',
+    'bg-fuchsia-500',
+    'bg-rose-500',
+    'bg-amber-500',
+  ];
+
+  const colorIndex =
+    Math.abs(
+      commentId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
+    ) % colors.length;
+  return colors[colorIndex];
+}
+
 function CommentItem({
   comment,
   isReply = false,
 }: {
-  comment: Comment | Reply;
+  comment:
+    | Comment
+    | {
+        id: string;
+        message: string;
+        created_time: string;
+        from: CommentUser;
+        like_count: number;
+      };
   isReply?: boolean;
 }) {
+  // Generate a consistent avatar URL based on the comment ID
+  const avatarUrl = generateAvatarUrl(comment.id);
+  const avatarBgColor = generateAvatarBgColor(comment.id);
+
+  // Generate a random name if not provided
+  const displayName = comment.from?.name || pickRandomName();
+
+  // Format the time
+  const timeAgo = formatDistanceToNow(new Date(comment.created_time), {
+    addSuffix: true,
+  });
+
   return (
-    <div className={`bg-gray-100 p-4 rounded-lg ${isReply ? 'ml-8 mt-2' : ''}`}>
-      <div className='flex items-start space-x-3'>
-        <Image
-          src={comment.from?.picture?.data?.url || '/logo-white.png'}
-          alt={comment.from?.name}
-          width={40}
-          height={40}
-          className='bg-black rounded-full rounded-full'
-        />
-        <div className='flex-1'>
-          <div className='flex items-center justify-between mb-2'>
-            <span className='font-semibold text-gray-800'>
-              {comment.from?.name || pickArandomName()}
-            </span>
+    <div
+      className={`${
+        isReply
+          ? 'ml-10 mt-3 border-l-2 border-gray-200 pl-4'
+          : 'border border-gray-200'
+      } 
+                    rounded-lg transition-all duration-300 hover:shadow-md bg-white dark:bg-gray-800 overflow-hidden`}
+    >
+      <div className='p-4'>
+        <div className='flex items-start space-x-3'>
+          <div
+            className={`relative w-12 h-12 overflow-hidden rounded-full ${avatarBgColor} flex items-center justify-center shadow-md`}
+          >
+            <Image
+              src={comment.from?.picture?.data?.url || avatarUrl}
+              alt={displayName}
+              width={48}
+              height={48}
+              className='rounded-full object-cover'
+            />
           </div>
-          <div className='flex items-center justify-between mb-2'>
-            <span className='text-sm text-gray-500'>
-              {formatDistanceToNow(new Date(comment.created_time), {
-                addSuffix: true,
-              })}
-            </span>
-          </div>
-          <p className='text-gray-700'>{comment.message}</p>
-          <div className='flex items-center space-x-4 mt-2 text-sm text-gray-500'>
-            <div className='flex items-center'>
-              <ThumbsUp className='w-4 h-4 mr-1' />
-              <span>{comment.like_count}</span>
+          <div className='flex-1'>
+            <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between'>
+              <span className='font-bold text-gray-900 dark:text-white'>
+                {displayName}
+              </span>
+              <span className='text-xs text-gray-500 dark:text-gray-400 mt-1 sm:mt-0'>
+                {timeAgo}
+              </span>
             </div>
-            {!isReply && (
-              <div className='flex items-center'>
-                <Reply className='w-4 h-4 mr-1' />
-                <span>{comment.comment_count}</span>
+
+            <p className='mt-2 text-gray-700 dark:text-gray-300 whitespace-pre-line'>
+              {comment.message}
+            </p>
+
+            <div className='flex items-center space-x-4 mt-3 pt-2 border-t border-gray-100 dark:border-gray-700'>
+              <div className='flex items-center text-gray-500 dark:text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors duration-200'>
+                <Heart className='w-4 h-4 mr-1' />
+                <span className='text-sm font-medium'>
+                  {comment.like_count}
+                </span>
               </div>
-            )}
+
+              {!isReply &&
+                'comment_count' in comment &&
+                comment.comment_count > 0 && (
+                  <div className='flex items-center text-gray-500 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors duration-200'>
+                    <Reply className='w-4 h-4 mr-1' />
+                    <span className='text-sm font-medium'>
+                      {comment.comment_count}
+                    </span>
+                  </div>
+                )}
+            </div>
           </div>
         </div>
       </div>
@@ -203,36 +297,82 @@ function CommentItem({
   );
 }
 
-export function Comments({ comments }: CommentsProps) {
-  if (!comments || comments.length === 0) {
-    return <div className='text-gray-500 italic'>No comments yet.</div>;
+export function Comments({ comments, videoId }: CommentsProps) {
+  const [localComments, setLocalComments] = useState<Comment[]>([]);
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  useEffect(() => {
+    if (comments && comments.length > 0) {
+      setLocalComments(comments);
+    } else {
+      setLocalComments([]);
+    }
+  }, [comments]);
+
+  // Show only 3 comments initially, unless expanded
+  const displayedComments = isExpanded
+    ? localComments
+    : localComments.slice(0, 3);
+
+  if (!localComments || localComments.length === 0) {
+    return (
+      <div className='bg-white dark:bg-gray-800 rounded-lg p-6 text-center shadow-sm'>
+        <MessageCircle className='w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-3' />
+        <p className='text-gray-500 dark:text-gray-400'>
+          No comments yet on this video.
+        </p>
+        <p className='text-sm text-gray-400 dark:text-gray-500 mt-2'>
+          Comments are pulled from Facebook and cannot be added directly.
+        </p>
+      </div>
+    );
   }
 
   return (
-    <div className='space-y-4'>
-      <h3 className='text-lg font-semibold flex items-center'>
-        <MessageCircle className='w-5 h-5 mr-2' />
-        Comments ({comments.length})
-      </h3>
-      <p className='text-gray-500 text-xs'>
-        Due to privacy policies we use anonymous names and images
+    <div className='space-y-4 bg-gray-50 dark:bg-gray-900 rounded-lg p-5'>
+      <div className='flex items-center justify-between'>
+        <h3 className='text-xl font-bold flex items-center text-gray-900 dark:text-white'>
+          <MessageCircle className='w-5 h-5 mr-2 text-blue-500' />
+          Comments{' '}
+          <span className='ml-2 text-sm bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 py-0.5 px-2 rounded-full'>
+            {localComments.length}
+          </span>
+        </h3>
+      </div>
+
+      <p className='text-gray-500 dark:text-gray-400 text-xs italic border-l-2 border-blue-300 pl-2'>
+        Comments are pulled from Facebook. Profile pictures are generated
+        randomly for privacy.
       </p>
-      <ul className='space-y-4'>
-        {comments.map((comment) => (
-          <li key={comment.id}>
+
+      <div className='space-y-3 mt-4'>
+        {displayedComments.map((comment) => (
+          <div key={comment.id} className='animate-fadeIn'>
             <CommentItem comment={comment} />
-            {/* {comment.replies && comment.replies.length > 0 && (
-              <ul className='mt-2 space-y-2'>
+            {comment.replies && comment.replies.length > 0 && (
+              <div className='space-y-2 mt-1'>
                 {comment.replies.map((reply) => (
-                  <li key={reply.id}>
+                  <div key={reply.id} className='animate-fadeIn'>
                     <CommentItem comment={reply} isReply={true} />
-                  </li>
+                  </div>
                 ))}
-              </ul>
-            )} */}
-          </li>
+              </div>
+            )}
+          </div>
         ))}
-      </ul>
+      </div>
+
+      {localComments.length > 3 && (
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className='w-full mt-4 py-2 px-4 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 
+                    text-gray-700 dark:text-gray-200 rounded-md transition-colors duration-200 text-sm font-medium'
+        >
+          {isExpanded
+            ? 'Show Less Comments'
+            : `Show All Comments (${localComments.length})`}
+        </button>
+      )}
     </div>
   );
 }
