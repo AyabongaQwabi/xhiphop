@@ -214,6 +214,9 @@ export function Comments({ comments }: CommentsProps) {
         <MessageCircle className='w-5 h-5 mr-2' />
         Comments ({comments.length})
       </h3>
+      <p className='text-gray-500 text-xs'>
+        Due to privacy policies we use anoyomous names and images
+      </p>
       <ul className='space-y-4'>
         {comments.map((comment) => (
           <li key={comment.id}>
